@@ -18,6 +18,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Format.h"
 
+#include <sstream>
+
 #define DEBUG_TYPE "clang-tidy"
 
 using namespace clang::ast_matchers;
@@ -265,10 +267,20 @@ static bool matchesStyle(StringRef Name,
   else
     Matches = false;
 
-  if (Name.endswith(Style.Suffix))
-    Name = Name.drop_back(Style.Suffix.size());
-  else
-    Matches = false;
+  std::stringstream SSuffix(Style.Suffix);
+  std::string item;
+  std::vector<std::string> suffixes;
+
+  while (std::getline(SSuffix, item, '|')) {
+    suffixes.push_back(item);
+  }
+
+  for (const auto& suffix : suffixes) {
+    if (Name.endswith(suffix)) {
+      Name = Name.drop_back(suffix.size());
+      Matches = Matches && true;
+    }
+  }
 
   // Ensure the name doesn't have any extra underscores beyond those specified
   // in the prefix and suffix.
